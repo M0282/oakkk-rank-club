@@ -23,7 +23,7 @@ function HighlightCard({ type, item, minGames }) {
   return (
     <article className={`duo-highlight ${best ? "best" : "worst"}`}>
       <div className="eyebrow">
-        {best ? "BEST SAME-TEAM RATE" : "LOWEST SAME-TEAM RATE"}
+        {best ? "최고 듀오 승률" : "최악 듀오 승률"}
       </div>
       {item ? (
         <>

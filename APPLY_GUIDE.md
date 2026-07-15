@@ -1,94 +1,106 @@
-# 오크크 랭크 클럽 완성본 적용 안내
+# 오크크 랭크 클럽 v7 적용 안내
 
-## 이번 버전에 포함된 기능
+이 패키지는 기존 Git 저장소의 `.git`과 로컬 환경변수를 유지하면서 소스만 교체합니다.
+적용 전에 현재 프로젝트를 ZIP으로 자동 백업하고, 설치·테스트·빌드까지 실행합니다.
 
-- 등록 플레이어별 솔로랭크 최근 **20경기** 수집 및 카드 표시
-- Riot Match-V5 상세 결과를 Supabase `matches`, `match_participants`에 캐시
-- 등록된 사람끼리 같은 경기·같은 팀이었던 기록 집계
-- 최고 승률 조합, 최저 승률 조합, 전체 조합 순위표
-- `01 랭크 보드 / 02 듀오 통계 / 03 커뮤니티` 페이지 분리
-- 친구 추가를 커뮤니티 페이지 최하단의 접힌 메뉴로 이동
-- 무료 예측 난이도별 정답 보상 `5 / 10 / 15 / 20 오크크`
-- 참가 비용과 오답 차감은 계속 0
-- Node.js 24 설정 및 공개 npm 레지스트리 기반 `package-lock.json`
+## 포함 기능
 
-## 1. 가장 쉬운 덮어쓰기
+- 최근 솔로랭크 최대 20경기 수집 및 표시
+- 등록 플레이어끼리 같은 `matchId`·같은 `teamId`였던 경기 집계
+- 최고/최저 같은 팀 승률과 전체 조합 표
+- `01 랭크 보드 / 02 듀오 통계 / 03 커뮤니티` 탭
+- 친구 추가 메뉴를 커뮤니티 페이지 최하단의 접힌 영역으로 이동
+- 예측 판정 시간 8시간
+- 점수 변동폭 절대값에 따른 보상
+  - `0`: 5 오크크
+  - `±20`: 10 오크크
+  - `±40`: 15 오크크
+  - `±60`: 20 오크크
+- 참가 비용 0, 오답 차감 0
+- PostgreSQL 예약어 대신 `score_delta` 컬럼 사용
 
-이 ZIP은 기존 Git 저장소 바깥에 압축을 풉니다. 압축을 푼 폴더에서 다음 파일을 더블 클릭합니다.
+## 1. 가장 간단한 적용
+
+압축을 Downloads에 푼 뒤, 압축 해제 폴더 안의 다음 파일을 더블 클릭합니다.
 
 ```text
 APPLY_UPDATE.bat
 ```
 
-PowerShell 한 줄로 실행하려면:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\apply-update.ps1
-```
-
-기본 대상 경로는 현재 사용 중인 다음 폴더입니다.
+기본 대상 경로:
 
 ```text
 C:\Users\우성한\Downloads\oakkk-rank-club\oakkk-rank-club
 ```
 
-경로가 다르면:
+경로가 다르면 PowerShell에서 다음처럼 실행합니다.
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\apply-update.ps1 -Target "C:\다른\프로젝트\경로"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+& .\apply-update.ps1 -Target "C:\실제\프로젝트\경로"
 ```
 
-스크립트는 `.git`, `.env`, `.env.local`, `node_modules`를 보존하고 소스 파일만 교체한 뒤 `npm install`, `npm test`, `npm run build`까지 검사합니다. 기존 저장소에 커밋하지 않은 변경이 있으면 안전을 위해 중단합니다.
+스크립트가 수행하는 작업:
 
-## 2. Supabase 마이그레이션 — 필수
+1. 기존 프로젝트를 `oakkk-backups` 폴더에 ZIP으로 백업
+2. 소스 파일 교체
+3. 공개 npm 레지스트리 확인
+4. `npm install`
+5. `npm test`
+6. `npm run build`
+7. 실행할 Supabase SQL을 클립보드에 복사
 
-GitHub에 푸시하기 전에 Supabase Dashboard의 **SQL Editor**에서 다음 파일을 열어 전체 실행합니다.
+마지막에 `UPDATE APPLIED AND VERIFIED.`가 표시되어야 합니다.
+
+## 2. Supabase SQL 실행
+
+스크립트가 끝나면 SQL이 클립보드에 복사되어 있습니다.
+
+1. Supabase Dashboard → SQL Editor
+2. New query
+3. `Ctrl+V`
+4. Run
+
+정상 결과:
 
 ```text
-supabase/migration_2026_07_complete.sql
+Success. No rows returned
 ```
 
-이 작업으로 다음이 추가됩니다.
+직접 파일을 열 경우 다음 파일 하나만 사용합니다.
 
-- `predictions.base_score`
-- `predictions.offset`
-- `predictions.potential_reward`
-- `matches`
-- `match_participants`
-- 난이도별 보상을 지급하는 `resolve_prediction()` 함수
+```text
+RUN_THIS_IN_SUPABASE.sql
+```
 
-마이그레이션은 `if not exists` 기반으로 작성되어 같은 파일을 실수로 다시 실행해도 데이터 테이블을 삭제하지 않습니다.
+이 SQL은 통합 마이그레이션입니다. 별도의 예측 패치 SQL을 추가로 실행하지 않습니다.
 
-## 3. GitHub와 Vercel 반영
+## 3. GitHub 업로드
 
-기존 프로젝트 폴더에서 Git Bash를 열고 실행합니다.
+원래 프로젝트 폴더에서 실행합니다.
 
-```bash
+```powershell
+cd "$HOME\Downloads\oakkk-rank-club\oakkk-rank-club"
 git add .
-git commit -m "Add 20-match duo stats and prediction rewards"
+git commit -m "Complete duo stats and 8-hour prediction update"
 git pull --rebase origin main
 git push origin main
 ```
 
-Vercel이 GitHub 저장소와 연결되어 있으면 자동으로 새 배포가 시작됩니다.
+Vercel이 GitHub와 연결되어 있으면 자동 배포가 시작됩니다.
 
-## 4. 배포 직후 듀오 통계 채우기
+## 4. 배포 후 확인
 
-기존 DB의 `recent_matches`에는 전체 참가자 정보가 없으므로 최초에는 듀오 통계가 비어 있을 수 있습니다.
+- Vercel 배포 상태가 `Ready`
+- 랭크 보드에 최대 20경기 결과 표시
+- 듀오 통계 탭 존재
+- 커뮤니티 하단에 친구 추가 메뉴 존재
+- 예측 화면에 8시간 판정과 5/10/15/20 보상 표시
 
-- `즉시 갱신` 한 번에 갱신되는 인원: 최대 2명
-- 일반 페이지 조회 시 오래된 플레이어 1명씩 순환 갱신
-- 각 플레이어의 최초 갱신에서 최근 20경기 상세를 캐시
-- 이후에는 이미 저장된 경기 상세를 재사용하므로 API 호출량이 크게 감소
+기존 DB에는 경기 참가자 캐시가 없으므로 듀오 통계가 처음에는 비어 있을 수 있습니다.
+`즉시 갱신`을 누르면 오래된 플레이어부터 최근 경기 상세가 순차적으로 저장됩니다.
 
-등록 인원이 많다면 `즉시 갱신`을 여러 번 누르되, 한 번의 갱신이 끝난 뒤 다음 갱신을 누릅니다. 화면의 `02 듀오 통계`에서 수집된 플레이어 수와 경기 수를 확인할 수 있습니다.
+## 통계 표현의 한계
 
-## 통계 의미
-
-사이트의 ‘듀오’는 공개 Riot API에서 확인 가능한 다음 조건을 의미합니다.
-
-- 솔로/듀오 랭크 `queueId = 420`
-- 동일한 `matchId`
-- 동일한 `teamId`
-
-Riot API는 실제 사전 구성 파티 여부를 직접 제공하지 않으므로, 우연히 같은 팀으로 매칭된 경기도 포함될 수 있습니다. 화면에도 이 한계를 명시했습니다.
+Riot Match API로 확인 가능한 것은 두 플레이어가 같은 솔로랭크 경기에서 같은 팀이었다는 사실입니다.
+실제 사전 구성 파티 여부는 직접 제공되지 않으므로 우연히 같은 팀으로 잡힌 경기도 포함될 수 있습니다.

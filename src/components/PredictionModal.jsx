@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api";
 import { scoreToRankLabel } from "../lib/rank";
 import {
-  ALLOWED_PREDICTION_OFFSETS,
+  ALLOWED_SCORE_DELTAS,
+  PREDICTION_DURATION_HOURS,
   predictionReward
 } from "../../shared/prediction.js";
 
@@ -14,7 +15,7 @@ export default function PredictionModal({
   onCreated
 }) {
   const [playerId, setPlayerId] = useState("");
-  const [offset, setOffset] = useState(20);
+  const [scoreDelta, setScoreDelta] = useState(20);
   const [direction, setDirection] = useState("over");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -28,21 +29,18 @@ export default function PredictionModal({
         )?.id ||
         ""
     );
-    setOffset(20);
+    setScoreDelta(20);
     setDirection("over");
     setError("");
   }, [open, initialPlayer, players]);
 
   const player = players.find((item) => item.id === playerId);
   const targetScore = useMemo(
-    () =>
-      Math.max(
-        0,
-        Math.min(5000, Number(player?.rank_score || 0) + Number(offset))
-      ),
-    [player, offset]
+    () => Number(player?.rank_score || 0) + Number(scoreDelta),
+    [player, scoreDelta]
   );
-  const reward = predictionReward(direction, offset);
+  const reward = predictionReward(scoreDelta);
+  const targetIsValid = targetScore >= 0 && targetScore <= 5000;
 
   if (!open) return null;
 
@@ -53,7 +51,7 @@ export default function PredictionModal({
     try {
       const payload = await api("/api/predictions", {
         method: "POST",
-        body: JSON.stringify({ playerId, direction, scoreDelta: offset })
+        body: JSON.stringify({ playerId, direction, scoreDelta })
       });
       onCreated(payload);
       onClose();
@@ -74,10 +72,11 @@ export default function PredictionModal({
           ×
         </button>
         <div className="eyebrow">FREE DAILY CHALLENGE</div>
-        <h2>48시간 뒤 랭크 예측</h2>
+        <h2>{PREDICTION_DURATION_HOURS}시간 뒤 랭크 예측</h2>
         <p className="modal-copy">
-          참가 비용과 오답 손실은 없습니다. 현재 점수에서 목표 변동폭을
-          정하고, 어려운 방향을 선택할수록 정답 보상이 커집니다.
+          참가 비용과 오답 손실은 없습니다. 현재 점수에서 선택한 변동폭의
+          절대값이 클수록 정답 보상이 커집니다. 이상·미만 방향은 보상에
+          영향을 주지 않습니다.
         </p>
 
         <form className="stack-form" onSubmit={submit}>
@@ -101,10 +100,10 @@ export default function PredictionModal({
           <label>
             현재 점수에서 목표 조정
             <select
-              value={offset}
-              onChange={(event) => setOffset(Number(event.target.value))}
+              value={scoreDelta}
+              onChange={(event) => setScoreDelta(Number(event.target.value))}
             >
-              {ALLOWED_PREDICTION_OFFSETS.map((item) => (
+              {ALLOWED_SCORE_DELTAS.map((item) => (
                 <option key={item} value={item}>
                   {item > 0 ? "+" : ""}
                   {item}점
@@ -117,8 +116,8 @@ export default function PredictionModal({
             <span>예측 기준</span>
             <strong>{scoreToRankLabel(targetScore)}</strong>
             <small>
-              현재 {scoreToRankLabel(player?.rank_score || 0)} → {offset > 0 ? "+" : ""}
-              {offset}점
+              현재 {scoreToRankLabel(player?.rank_score || 0)} → {scoreDelta > 0 ? "+" : ""}
+              {scoreDelta}점
             </small>
           </div>
 
@@ -142,11 +141,22 @@ export default function PredictionModal({
           <div className="reward-preview">
             <span>정답 보상</span>
             <strong>{reward} 오크크</strong>
+            <small>
+              |변동폭| 0점: 5 · 20점: 10 · 40점: 15 · 60점: 20 오크크
+            </small>
             <small>오답이어도 보유 오크크는 줄지 않습니다.</small>
           </div>
 
+          {!targetIsValid && (
+            <div className="form-error">
+              현재 점수에서는 선택한 변동폭을 적용할 수 없습니다.
+            </div>
+          )}
           {error && <div className="form-error">{error}</div>}
-          <button className="primary-button" disabled={busy || !playerId}>
+          <button
+            className="primary-button"
+            disabled={busy || !playerId || !targetIsValid}
+          >
             {busy ? "등록 중" : "오늘의 예측 확정"}
           </button>
         </form>

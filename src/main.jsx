@@ -245,7 +245,7 @@ function App() {
                 <div className="eyebrow">OAKKK CHALLENGE</div>
                 <h2>오늘의 무료 예측</h2>
               </div>
-              <span>48시간 뒤 판정</span>
+              <span>{dashboard?.rules?.predictionHours || 8}시간 뒤 판정</span>
             </div>
 
             {todayPrediction ? (
@@ -274,7 +274,7 @@ function App() {
                   오늘의 예측 참여
                 </button>
                 <p>
-                  참가 비용 0 · 오답 차감 0 · 난이도별 정답 보상 5~20 오크크
+                  참가 비용 0 · 오답 차감 0 · |변동폭|이 클수록 보상 5~20 오크크
                 </p>
               </>
             )}

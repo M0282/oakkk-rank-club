@@ -8,7 +8,8 @@ import {
 import { scoreToRankLabel } from "../lib/server/rank.js";
 import { getSupabase } from "../lib/server/supabase.js";
 import {
-  ALLOWED_PREDICTION_OFFSETS,
+  ALLOWED_SCORE_DELTAS,
+  PREDICTION_DURATION_HOURS,
   predictionReward
 } from "../shared/prediction.js";
 
@@ -31,12 +32,12 @@ export default {
       const body = await readJson(request);
       const playerId = String(body.playerId || "");
       const direction = String(body.direction || "");
-      const scoreDelta = Math.round(Number(body.scoreDelta ?? body.offset));
+      const scoreDelta = Math.round(Number(body.scoreDelta));
 
       if (!["over", "under"].includes(direction)) {
         return json({ error: "예측 방향이 올바르지 않습니다." }, 400);
       }
-      if (!ALLOWED_PREDICTION_OFFSETS.includes(scoreDelta)) {
+      if (!ALLOWED_SCORE_DELTAS.includes(scoreDelta)) {
         return json({ error: "목표 점수 조정값이 올바르지 않습니다." }, 400);
       }
 
@@ -57,8 +58,11 @@ export default {
       }
 
       const baseScore = Math.round(Number(player.rank_score));
-      const targetScore = Math.max(0, Math.min(5000, baseScore + scoreDelta));
-      const potentialReward = predictionReward(direction, scoreDelta);
+      const targetScore = baseScore + scoreDelta;
+      if (targetScore < 0 || targetScore > 5000) {
+        return json({ error: "현재 점수에서는 해당 변동폭을 선택할 수 없습니다." }, 400);
+      }
+      const potentialReward = predictionReward(scoreDelta);
 
       const { data, error } = await supabase
         .from("predictions")
@@ -72,7 +76,7 @@ export default {
           potential_reward: potentialReward,
           target_score: targetScore,
           target_label: scoreToRankLabel(targetScore),
-          resolves_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+          resolves_at: new Date(Date.now() + PREDICTION_DURATION_HOURS * 60 * 60 * 1000).toISOString()
         })
         .select(
           "id,player_id,direction,base_score,score_delta,potential_reward,target_score,target_label,resolves_at,status,reward,created_at"
@@ -99,7 +103,7 @@ export default {
               tag_line: player.tag_line
             }
           },
-          message: `예측이 등록되었습니다. 오답 차감은 없으며 정답 보상은 ${potentialReward} 오크크입니다.`
+          message: `예측이 등록되었습니다. ${PREDICTION_DURATION_HOURS}시간 뒤 판정되며, 오답 차감은 없고 정답 보상은 ${potentialReward} 오크크입니다.`
         },
         201
       );

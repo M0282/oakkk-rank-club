@@ -80,8 +80,8 @@ create table if not exists public.predictions (
   direction text not null check (direction in ('over', 'under')),
   base_score integer not null check (base_score between 0 and 5000),
   score_delta integer not null default 0 check (score_delta in (-60, -40, -20, 0, 20, 40, 60)),
-  potential_reward integer not null default 10
-    check (potential_reward between 0 and 100),
+  potential_reward integer not null default 5
+    check (potential_reward in (5, 10, 15, 20)),
   target_score integer not null check (target_score between 0 and 5000),
   target_label text not null,
   resolves_at timestamptz not null,

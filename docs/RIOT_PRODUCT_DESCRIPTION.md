@@ -26,10 +26,10 @@ in the same match and on the same team.
 
 The product has a free daily prediction challenge. A member may make one
 prediction per calendar day about whether another registered member's official
-rank state will be at or above, or below, a selected target after 48 hours.
+rank state will be at or above, or below, a selected target after 8 hours.
 Participation has no fee or stake. Incorrect predictions do not remove points.
 Correct predictions grant a 5-to-20-point activity reward called "Oakkk,"
-with the reward determined by the selected challenge difficulty.
+with the reward determined only by the absolute size of the selected score change target. The above/below direction does not change the reward.
 
 Oakkk is a non-purchasable, non-transferable, non-redeemable site activity
 point. It cannot be sold, exchanged for money, goods, services, cryptocurrency,
