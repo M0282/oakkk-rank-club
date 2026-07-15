@@ -2,15 +2,23 @@ import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AuthModal from "./components/AuthModal";
 import ChatPanel from "./components/ChatPanel";
+import DuoBoard from "./components/DuoBoard";
 import HeroCard from "./components/HeroCard";
 import PlayerCard from "./components/PlayerCard";
 import PredictionModal from "./components/PredictionModal";
 import { adminHeaders, api, setToken } from "./lib/api";
 import "./styles.css";
 
+const PAGE_LABELS = {
+  1: "랭크 보드",
+  2: "듀오 통계",
+  3: "커뮤니티"
+};
+
 function App() {
   const [dashboard, setDashboard] = useState(null);
   const [user, setUser] = useState(null);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -31,9 +39,7 @@ function App() {
     setError("");
 
     try {
-      const payload = await api(
-        `/api/dashboard${force ? "?force=1" : ""}`
-      );
+      const payload = await api(`/api/dashboard${force ? "?force=1" : ""}`);
       setDashboard(payload);
       setUser(payload.me || null);
     } catch (err) {
@@ -57,11 +63,17 @@ function App() {
   const sortedPlayers = useMemo(
     () =>
       [...(dashboard?.players || [])].sort(
-        (a, b) =>
-          Number(b.rank_score || -1) - Number(a.rank_score || -1)
+        (a, b) => Number(b.rank_score || -1) - Number(a.rank_score || -1)
       ),
     [dashboard]
   );
+
+  const todayPrediction = dashboard?.myPredictions?.find((item) => {
+    const format = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Seoul"
+    });
+    return format.format(new Date(item.created_at)) === format.format(new Date());
+  });
 
   function needLogin() {
     setAuthOpen(true);
@@ -140,13 +152,6 @@ function App() {
     load(false);
   }
 
-  const todayPrediction = dashboard?.myPredictions?.find((item) => {
-    const format = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Seoul"
-    });
-    return format.format(new Date(item.created_at)) === format.format(new Date());
-  });
-
   return (
     <main className="page">
       <header className="topbar">
@@ -181,18 +186,31 @@ function App() {
         </div>
       </header>
 
+      <nav className="page-tabs" aria-label="페이지 이동">
+        {Object.entries(PAGE_LABELS).map(([number, label]) => (
+          <button
+            key={number}
+            className={page === Number(number) ? "active" : ""}
+            onClick={() => setPage(Number(number))}
+          >
+            <b>{String(number).padStart(2, "0")}</b>
+            {label}
+          </button>
+        ))}
+      </nav>
+
       <section className="market-strip">
         <div>
           <span>MEMBERS</span>
           <strong>{dashboard?.players?.length || 0} PLAYERS</strong>
         </div>
         <div>
-          <span>PREDICTION</span>
-          <strong>1 / DAY · FREE</strong>
+          <span>SAME-TEAM PAIRS</span>
+          <strong>{dashboard?.duoStats?.length || 0} RECORDED</strong>
         </div>
         <div>
-          <span>REWARD</span>
-          <strong>+10 오크크</strong>
+          <span>PREDICTION REWARD</span>
+          <strong>5 ~ 20 오크크</strong>
         </div>
         <div>
           <span>UPDATED</span>
@@ -214,114 +232,102 @@ function App() {
         </div>
       )}
 
-      <section className="hero-grid">
-        <HeroCard type="win" player={dashboard?.winKing} />
-        <HeroCard type="loss" player={dashboard?.lossKing} />
-      </section>
+      {page === 1 && (
+        <>
+          <section className="hero-grid">
+            <HeroCard type="win" player={dashboard?.winKing} />
+            <HeroCard type="loss" player={dashboard?.lossKing} />
+          </section>
 
-      <section className="control-grid">
-        <article className="control-card">
-          <div className="panel-heading">
-            <div>
-              <div className="eyebrow">ADD FRIEND</div>
-              <h2>Riot ID 등록</h2>
+          <section className="control-card prediction-control standalone-prediction">
+            <div className="panel-heading">
+              <div>
+                <div className="eyebrow">OAKKK CHALLENGE</div>
+                <h2>오늘의 무료 예측</h2>
+              </div>
+              <span>48시간 뒤 판정</span>
             </div>
-            <span>최대 30명</span>
-          </div>
 
-          <form className="inline-form" onSubmit={addPlayer}>
-            <input
-              value={riotId}
-              placeholder="게임이름#KR1"
-              onChange={(event) => setRiotId(event.target.value)}
-              required
-            />
-            <button disabled={adding}>
-              {adding ? "확인 중" : "친구 추가"}
-            </button>
-          </form>
+            {todayPrediction ? (
+              <div className="today-prediction">
+                <span>오늘 참여 완료</span>
+                <strong>
+                  {todayPrediction.player?.game_name}#
+                  {todayPrediction.player?.tag_line}
+                </strong>
+                <p>
+                  {todayPrediction.target_label}{" "}
+                  {todayPrediction.direction === "over" ? "이상" : "미만"} ·{" "}
+                  {todayPrediction.status === "pending"
+                    ? `판정 대기 · 정답 보상 ${todayPrediction.potential_reward} 오크크`
+                    : todayPrediction.status === "won"
+                      ? `정답 +${todayPrediction.reward} 오크크`
+                      : "오답 · 차감 없음"}
+                </p>
+              </div>
+            ) : (
+              <>
+                <button
+                  className="primary-button"
+                  onClick={() => openPrediction()}
+                >
+                  오늘의 예측 참여
+                </button>
+                <p>
+                  참가 비용 0 · 오답 차감 0 · 난이도별 정답 보상 5~20 오크크
+                </p>
+              </>
+            )}
+          </section>
 
-          <p>
-            초대 코드로 가입한 친구가 계정을 등록할 수 있습니다. 중복 Riot
-            ID는 추가되지 않습니다.
-          </p>
-        </article>
-
-        <article className="control-card prediction-control">
-          <div className="panel-heading">
-            <div>
-              <div className="eyebrow">OAKKK CHALLENGE</div>
-              <h2>오늘의 무료 예측</h2>
-            </div>
-            <span>48시간 뒤 판정</span>
-          </div>
-
-          {todayPrediction ? (
-            <div className="today-prediction">
-              <span>오늘 참여 완료</span>
-              <strong>
-                {todayPrediction.player?.game_name}#
-                {todayPrediction.player?.tag_line}
-              </strong>
-              <p>
-                {todayPrediction.target_label}{" "}
-                {todayPrediction.direction === "over" ? "이상" : "미만"} ·{" "}
-                {todayPrediction.status === "pending"
-                  ? "판정 대기"
-                  : todayPrediction.status === "won"
-                    ? `정답 +${todayPrediction.reward} 오크크`
-                    : "오답 · 차감 없음"}
-              </p>
-            </div>
-          ) : (
-            <>
-              <button
-                className="primary-button"
-                onClick={() => openPrediction()}
-              >
-                오늘의 예측 참여
+          <section className="friends-section rank-page-section">
+            <div className="section-heading">
+              <div>
+                <div className="eyebrow">ALL FRIENDS</div>
+                <h2>솔로 랭크 보드</h2>
+                <p>
+                  현재 LP와 최근 솔로랭크 최대 20경기 승률을 표시합니다.
+                </p>
+              </div>
+              <button className="admin-button" onClick={toggleAdmin}>
+                {adminMode ? "관리자 모드 종료" : "관리자 모드"}
               </button>
-              <p>참가 비용 0 · 오답 차감 0 · 정답 보상 10 오크크</p>
-            </>
-          )}
-        </article>
-      </section>
-
-      <section className="content-layout">
-        <section className="friends-section">
-          <div className="section-heading">
-            <div>
-              <div className="eyebrow">ALL FRIENDS</div>
-              <h2>솔로 랭크 보드</h2>
-              <p>현재 LP와 최근 솔로 랭크 3경기 승률</p>
             </div>
-            <button className="admin-button" onClick={toggleAdmin}>
-              {adminMode ? "관리자 모드 종료" : "관리자 모드"}
-            </button>
-          </div>
 
-          {loading && !dashboard ? (
-            <div className="player-grid">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div className="skeleton-card" key={index} />
-              ))}
-            </div>
-          ) : (
-            <div className="player-grid">
-              {sortedPlayers.map((player) => (
-                <PlayerCard
-                  key={player.id}
-                  player={player}
-                  adminMode={adminMode}
-                  onDelete={deletePlayer}
-                  onPredict={openPrediction}
-                />
-              ))}
-            </div>
-          )}
-        </section>
+            {loading && !dashboard ? (
+              <div className="player-grid">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div className="skeleton-card" key={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="player-grid">
+                {sortedPlayers.map((player) => (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    adminMode={adminMode}
+                    onDelete={deletePlayer}
+                    onPredict={openPrediction}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
 
-        <aside className="side-column">
+      {page === 2 && (
+        <DuoBoard
+          duoStats={dashboard?.duoStats || []}
+          bestDuo={dashboard?.bestDuo}
+          worstDuo={dashboard?.worstDuo}
+          coverage={dashboard?.duoCoverage}
+        />
+      )}
+
+      {page === 3 && (
+        <section className="community-layout">
           <ChatPanel
             initialMessages={dashboard?.messages || []}
             user={user}
@@ -354,13 +360,47 @@ function App() {
                 사이트 내부 무료 활동 포인트입니다. 구매·판매·양도·환전할
                 수 없으며 블록체인이나 암호화폐와 관련이 없습니다.
               </p>
-              <p>
-                예측 참여 시 차감되지 않고, 오답에도 손실이 없습니다.
-              </p>
+              <p>예측 참여와 오답에는 포인트가 차감되지 않습니다.</p>
             </div>
           </section>
-        </aside>
-      </section>
+
+          <details className="add-friend-bottom">
+            <summary>
+              <span>
+                <b>친구 추가</b>
+                <small>새 Riot ID를 등록할 때만 열어 주세요.</small>
+              </span>
+              <i>+</i>
+            </summary>
+            <article className="control-card">
+              <div className="panel-heading">
+                <div>
+                  <div className="eyebrow">ADD FRIEND</div>
+                  <h2>Riot ID 등록</h2>
+                </div>
+                <span>최대 30명</span>
+              </div>
+
+              <form className="inline-form" onSubmit={addPlayer}>
+                <input
+                  value={riotId}
+                  placeholder="게임이름#KR1"
+                  onChange={(event) => setRiotId(event.target.value)}
+                  required
+                />
+                <button disabled={adding}>
+                  {adding ? "확인 중" : "친구 추가"}
+                </button>
+              </form>
+
+              <p>
+                로그인한 친구가 등록할 수 있으며 중복 Riot ID는 추가되지
+                않습니다.
+              </p>
+            </article>
+          </details>
+        </section>
+      )}
 
       <footer>
         <p>

@@ -46,7 +46,7 @@ export default {
         return Date.now() - new Date(player.updated_at).getTime() > 5 * 60 * 1000;
       });
 
-      const refreshResults = await refreshPlayers(stale, 6);
+      const refreshResults = await refreshPlayers(stale, 2);
 
       const { data: currentPlayers, error: currentError } = await supabase
         .from("players")

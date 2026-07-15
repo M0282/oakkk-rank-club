@@ -15,9 +15,10 @@ export default function HeroCard({ type, player }) {
     );
   }
 
-  const recent = (player.recent_matches || []).slice(0, 5);
+  const allRecent = player.recent_matches || [];
+  const recent = allRecent.slice(0, 10);
   const latest = recent[0];
-  const capped = recent.length === streak && streak === 5 ? "+" : "";
+  const capped = allRecent.length === streak && streak >= 20 ? "+" : "";
 
   return (
     <article className={`hero-card ${isWin ? "win-card" : "loss-card"}`}>

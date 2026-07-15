@@ -860,3 +860,372 @@ footer p {
   .market-strip > div:last-child { border-bottom: 0; }
   .section-heading { flex-direction: column; }
 }
+
+/* 2026-07: 페이지 분리, 최근 20경기, 듀오 통계 */
+.page-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+
+.page-tabs button {
+  flex: 1;
+  padding: 13px 16px;
+  text-align: left;
+  color: var(--muted);
+  background: #0b111a;
+}
+
+.page-tabs button b {
+  margin-right: 9px;
+  color: inherit;
+}
+
+.page-tabs button.active {
+  border-color: var(--blue);
+  color: var(--text);
+  background: rgba(118, 149, 255, .1);
+  box-shadow: inset 0 -2px 0 var(--blue);
+}
+
+.standalone-prediction {
+  margin: 16px 0;
+}
+
+.rank-page-section,
+.duo-page,
+.community-layout {
+  margin-top: 16px;
+}
+
+.recent-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 11px;
+}
+
+.recent-summary-row span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.recent-summary-row strong {
+  font-size: 12px;
+}
+
+.result-dots-20 {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.result-dots-20 i {
+  width: 100%;
+  min-width: 0;
+  height: 18px;
+  font-size: 7px;
+}
+
+.no-match-copy {
+  grid-column: 1 / -1;
+  padding: 9px 0;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.target-preview small,
+.reward-preview small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.reward-preview {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+  padding: 13px 14px;
+  border: 1px solid #4c432c;
+  background: #1b180e;
+}
+
+.reward-preview span {
+  color: #b0a57e;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.reward-preview strong {
+  color: var(--amber);
+  font-size: 18px;
+}
+
+.reward-preview small {
+  grid-column: 1 / -1;
+}
+
+.duo-page-heading {
+  padding: 20px;
+  border: 1px solid var(--line);
+  background: rgba(10, 16, 24, .7);
+}
+
+.coverage-chip {
+  min-width: 190px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: #0a1018;
+}
+
+.coverage-chip span,
+.coverage-chip strong {
+  display: block;
+}
+
+.coverage-chip span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .1em;
+}
+
+.coverage-chip strong {
+  margin-top: 4px;
+  font-size: 11px;
+}
+
+.duo-highlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.duo-highlight {
+  min-height: 235px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, #141d2a, #0a1018);
+}
+
+.duo-highlight.best {
+  box-shadow: inset 0 3px 0 rgba(67, 229, 161, .7);
+}
+
+.duo-highlight.worst {
+  box-shadow: inset 0 3px 0 rgba(255, 98, 124, .7);
+}
+
+.duo-highlight h2 {
+  margin: 24px 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(21px, 3vw, 34px);
+  letter-spacing: -.04em;
+}
+
+.duo-rate {
+  font-size: clamp(45px, 7vw, 76px);
+  font-weight: 950;
+  letter-spacing: -.07em;
+}
+
+.duo-highlight.best .duo-rate { color: var(--green); }
+.duo-highlight.worst .duo-rate { color: var(--red); }
+
+.duo-highlight p,
+.duo-highlight small,
+.duo-disclaimer,
+.empty-panel {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.duo-highlight p { margin: 8px 0 2px; }
+
+.duo-empty-highlight {
+  display: grid;
+  align-content: center;
+  min-height: 150px;
+}
+
+.duo-empty-highlight strong {
+  color: var(--muted);
+}
+
+.duo-table-panel {
+  margin-top: 16px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  background: rgba(12, 18, 27, .85);
+}
+
+.duo-table-heading {
+  align-items: flex-end;
+}
+
+.duo-filter {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.duo-filter select {
+  width: auto;
+  min-width: 130px;
+  margin-top: 5px;
+  padding: 8px 10px;
+}
+
+.duo-table-wrap {
+  overflow-x: auto;
+}
+
+.duo-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.duo-table th,
+.duo-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.duo-table th {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: .12em;
+}
+
+.duo-table td strong,
+.duo-table td small {
+  display: block;
+}
+
+.duo-table td small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.duo-table td b {
+  color: var(--amber);
+}
+
+.duo-disclaimer {
+  margin-top: 18px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: #0a1018;
+}
+
+.empty-panel {
+  margin-top: 15px;
+  padding: 45px 16px;
+  text-align: center;
+  border: 1px dashed var(--line-strong);
+}
+
+.community-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+  gap: 16px;
+}
+
+.add-friend-bottom {
+  grid-column: 1 / -1;
+  margin-top: 34px;
+  border: 1px solid var(--line);
+  background: rgba(10, 16, 24, .55);
+}
+
+.add-friend-bottom summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 18px;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.add-friend-bottom summary::-webkit-details-marker { display: none; }
+
+.add-friend-bottom summary span,
+.add-friend-bottom summary b,
+.add-friend-bottom summary small {
+  display: block;
+}
+
+.add-friend-bottom summary b {
+  color: #aeb9ca;
+  font-size: 12px;
+}
+
+.add-friend-bottom summary small {
+  margin-top: 3px;
+  font-size: 9px;
+}
+
+.add-friend-bottom summary i {
+  font-style: normal;
+  font-size: 20px;
+  transition: transform .2s ease;
+}
+
+.add-friend-bottom[open] summary i {
+  transform: rotate(45deg);
+}
+
+.add-friend-bottom .control-card {
+  border-width: 1px 0 0;
+}
+
+@media (max-width: 850px) {
+  .duo-highlight-grid,
+  .community-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .page-tabs {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .duo-page-heading,
+  .duo-table-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .coverage-chip {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .result-dots-20 {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 3px;
+  }
+
+  .result-dots-20 i {
+    height: 16px;
+    font-size: 6px;
+  }
+}
